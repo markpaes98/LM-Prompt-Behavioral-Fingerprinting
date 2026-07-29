@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Information Leakage Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .grid-cell { transition: all 0.3s ease; }
+        .blurred { filter: blur(4px); opacity: 0.4; }
+        .revealed { filter: blur(0px); opacity: 1; font-weight: 600; }
+        .semantic-node { transition: all 0.5s ease; transform: scale(0.9); opacity: 0; }
+        .semantic-node.active { transform: scale(1); opacity: 1; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen p-6">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Embedding vs. TF-IDF Privacy Simulator</h1>
+            <p class="text-gray-600 max-w-2xl mx-auto">Visualize how much original semantic intent or exact vocabulary can be reconstructed from different text abstraction methods during an inversion attack.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            
+            <div class="md:col-span-4 space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <h2 class="text-lg font-semibold mb-4 border-b pb-2">Simulation Controls</h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Abstraction Method</label>
+                        <select id="method-select" class="w-full border border-gray-300 rounded-md shadow-sm p-2 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="tfidf">Standard TF-IDF (Sparse)</option>
+                            <option value="dense">Dense Embedding (Semantic)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            Dimensionality / Sparsity: <span id="dim-val" class="text-blue-600 font-bold">50</span>
+                        </label>
+                        <input type="range" id="dim-slider" min="10" max="100" step="10" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        <p class="text-xs text-gray-500 mt-1">Controls the size of the generated vector.</p>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button id="btn-reconstruct" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md shadow-sm transition-colors text-sm">
+                            Run Attack
+                        </button>
+                        <button id="btn-reset" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md transition-colors text-sm">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <h2 class="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wider">Generated Vector</h2>
+                    <div id="vector-grid" class="grid gap-1 bg-gray-100 p-2 rounded-lg" style="grid-template-columns: repeat(10, minmax(0, 1fr));">
+                        <!-- Grid cells injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-8 space-y-6">
+                
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <h2 class="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wider">Original Target Prompt</h2>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
+                        <p class="text-lg font-medium text-gray-800" id="original-text">
+                            Write a python script to parse confidential Q3 financial data
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 min-h-[300px] flex flex-col">
+                    <div class="flex justify-between items-center border-b pb-2 mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800">Reconstruction Output</h2>
+                        <span id="status-badge" class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">Idle</span>
+                    </div>
+                    
+                    <!-- Display container for TF-IDF Exact words -->
+                    <div id="reconstruction-tfidf" class="flex-1 hidden flex-wrap content-start gap-2 text-xl">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Display container for Dense Embeddings semantic mapping -->
+                    <div id="reconstruction-dense" class="flex-1 hidden flex-col items-center justify-center gap-4">
+                        <p class="text-sm text-gray-500 mb-2">Inferred Semantic Clusters:</p>
+                        <div class="flex flex-wrap justify-center gap-3" id="semantic-clusters">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    
+                    <div id="reconstruction-idle" class="flex-1 flex items-center justify-center text-gray-400 italic">
+                        Configure method and click "Run Attack" to view leakage.
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const methodSelect = document.getElementById('method-select');
+        const dimSlider = document.getElementById('dim-slider');
+        const dimVal = document.getElementById('dim-val');
+        const btnReconstruct = document.getElementById('btn-reconstruct');
+        const btnReset = document.getElementById('btn-reset');
+        const vectorGrid = document.getElementById('vector-grid');
+        
+        const viewIdle = document.getElementById('reconstruction-idle');
+        const viewTfidf = document.getElementById('reconstruction-tfidf');
+        const viewDense = document.getElementById('reconstruction-dense');
+        const statusBadge = document.getElementById('status-badge');
+        
+        // Data Configuration
+        const originalTokens = ["Write", "a", "python", "script", "to", "parse", "confidential", "Q3", "financial", "data"];
+        const tfidfTargets = [2, 3, 5, 6, 7, 8, 9]; // Indices of high-value words
+        
+        const semanticConcepts = [
+            { label: "Programming/Code", color: "bg-blue-100 text-blue-800 border-blue-200" },
+            { label: "Data Processing", color: "bg-purple-100 text-purple-800 border-purple-200" },
+            { label: "Corporate Finance", color: "bg-green-100 text-green-800 border-green-200" },
+            { label: "Highly Sensitive/Secret", color: "bg-red-100 text-red-800 border-red-200" }
+        ];
+
+        let animationTimeout = null;
+
+        function drawVector() {
+            const method = methodSelect.value;
+            const dim = parseInt(dimSlider.value);
+            
+            vectorGrid.innerHTML = '';
+            
+            // Adjust grid columns based on dimension to keep it looking decent
+            const cols = dim <= 30 ? 5 : 10;
+            vectorGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+
+            for(let i=0; i<dim; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell h-4 rounded-sm';
+                
+                if (method === 'tfidf') {
+                    // Sparse representation: mostly zeros (gray), few active dimensions
+                    const isActive = Math.random() > 0.85;
+                    cell.style.backgroundColor = isActive ? `rgba(220, 38, 38, ${Math.random() * 0.5 + 0.5})` : '#e5e7eb';
+                } else {
+                    // Dense representation: continuous values
+                    const val = Math.random();
+                    cell.style.backgroundColor = `rgba(59, 130, 246, ${val})`;
+                }
+                
+                vectorGrid.appendChild(cell);
+            }
+        }
+
+        function runAttack() {
+            const method = methodSelect.value;
+            
+            // Reset views
+            viewIdle.classList.add('hidden');
+            viewTfidf.classList.add('hidden');
+            viewDense.classList.add('hidden');
+            
+            statusBadge.textContent = "Attacking...";
+            statusBadge.className = "px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-600 animate-pulse";
+            
+            if (animationTimeout) clearTimeout(animationTimeout);
+
+            if (method === 'tfidf') {
+                viewTfidf.classList.remove('hidden');
+                viewTfidf.innerHTML = '';
+                
+                // Create blurred tokens
+                originalTokens.forEach((token, idx) => {
+                    const span = document.createElement('span');
+                    span.textContent = token;
+                    span.className = 'blurred px-1';
+                    span.id = `token-${idx}`;
+                    viewTfidf.appendChild(span);
+                });
+
+                // Animate revealing exact vocabulary
+                let delay = 500;
+                tfidfTargets.forEach((targetIdx) => {
+                    animationTimeout = setTimeout(() => {
+                        const el = document.getElementById(`token-${targetIdx}`);
+                        if(el) {
+                            el.className = 'revealed px-1 text-red-600 bg-red-50 rounded';
+                        }
+                    }, delay);
+                    delay += 600;
+                });
+
+                setTimeout(() => finishAttack("Exact Vocabulary Leaked"), delay + 200);
+
+            } else {
+                viewDense.classList.remove('hidden');
+                const clusterContainer = document.getElementById('semantic-clusters');
+                clusterContainer.innerHTML = '';
+
+                // Create hidden semantic concept nodes
+                semanticConcepts.forEach((concept, idx) => {
+                    const div = document.createElement('div');
+                    div.className = `semantic-node border px-4 py-3 rounded-xl shadow-sm ${concept.color}`;
+                    div.id = `concept-${idx}`;
+                    div.innerHTML = `<span class="block text-xs uppercase tracking-wider mb-1 opacity-70">Concept Mapped</span><span class="font-bold text-lg">${concept.label}</span>`;
+                    clusterContainer.appendChild(div);
+                });
+
+                // Animate revealing semantic clusters
+                let delay = 500;
+                semanticConcepts.forEach((_, idx) => {
+                    animationTimeout = setTimeout(() => {
+                        const el = document.getElementById(`concept-${idx}`);
+                        if(el) el.classList.add('active');
+                    }, delay);
+                    delay += 800;
+                });
+
+                setTimeout(() => finishAttack("Semantic Intent Leaked"), delay + 200);
+            }
+        }
+
+        function finishAttack(message) {
+            statusBadge.textContent = message;
+            statusBadge.className = "px-2 py-1 text-xs font-medium rounded-full bg-red-600 text-white shadow-sm";
+        }
+
+        function resetSim() {
+            if (animationTimeout) clearTimeout(animationTimeout);
+            viewIdle.classList.remove('hidden');
+            viewTfidf.classList.add('hidden');
+            viewDense.classList.add('hidden');
+            statusBadge.textContent = "Idle";
+            statusBadge.className = "px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600";
+            drawVector();
+        }
+
+        methodSelect.addEventListener('change', () => {
+            drawVector();
+            resetSim();
+        });
+        
+        dimSlider.addEventListener('input', (e) => {
+            dimVal.textContent = e.target.value;
+            drawVector();
+        });
+
+        btnReconstruct.addEventListener('click', runAttack);
+        btnReset.addEventListener('click', resetSim);
+
+        // Initial draw
+        drawVector();
+    </script>
+</body>
+</html>
