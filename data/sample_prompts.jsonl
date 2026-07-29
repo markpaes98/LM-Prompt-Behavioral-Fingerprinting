@@ -1,0 +1,10 @@
+{"user_id": "user_A", "prompt": "Write a python script to parse a CSV and output to JSON. Use pandas."}
+{"user_id": "user_A", "prompt": "Debug this error:\n```\nIndexError: list index out of range\n```\nLine 42."}
+{"user_id": "user_A", "prompt": "Regex to match IPv4 addresses. Return only the pattern."}
+{"user_id": "user_A", "prompt": "Convert the following bash script to a Dockerfile.\n```bash\napt-get update\n```"}
+{"user_id": "user_A", "prompt": "Optimize this SQL query for Postgres: SELECT * FROM users WHERE active=1;"}
+{"user_id": "user_B", "prompt": "Could you please help me understand the difference between symmetric and asymmetric encryption?"}
+{"user_id": "user_B", "prompt": "Thanks! Now, can you give me a real-world example of how a bank might use that?"}
+{"user_id": "user_B", "prompt": "I'm writing a report for my manager. Please summarize the key points of the NIST AI RMF."}
+{"user_id": "user_B", "prompt": "What are the main risks of insider threats in a hybrid work environment?"}
+{"user_id": "user_B", "prompt": "Could you please rewrite this paragraph to sound a bit more professional?"}
