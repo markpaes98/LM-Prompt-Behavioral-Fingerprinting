@@ -34,8 +34,8 @@ Below is a demonstration of why we use Syntactic TF-IDF over standard semantic e
 
 ![Simulator Demo](./docs/simulator-demo.gif)
 
-*(Want to try it yourself? [Download the HTML file](./docs/simulator.html) or [view it live via GitHub Pages](link-to-pages)).*
-Try the Interactive Simulator Live](https://htmlpreview.github.io/?https://github.com/YOUR_USERNAME/llm-prompt-fingerprinter/blob/main/docs/simulator.html)
+*Want to try it yourself? Download the HTML file - (./docs/simulator.html) or [view it live via GitHub Pages](https://htmlpreview.github.io/?https://github.com/markpaes98/LM-Prompt-Behavioral-Fingerprinting/blob/main/docs/simulator.html)).*
+
 
 ## Setup
 1. Create a virtual environment: `python -m venv venv && source venv/bin/activate`
