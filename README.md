@@ -20,14 +20,22 @@ Features extracted include:
 - **Stylometric:** Average word length, punctuation frequency (e.g., question marks).
 - **Behavioral:** Frequency of polite modifiers ("please", "thank you").
 
-### Enterprise Privacy & Policy Context
+### Privacy & Policy Context
 When implementing prompt-level monitoring, balancing security controls with employee privacy is paramount. By relying on metadata and syntactic stylometric features rather than logging the raw semantic content of every query, organizations can better align with data minimization principles.
 
 Standard TF-IDF acts as a sparse bag-of-words that easily leaks exact vocabulary, while Dense Embeddings (like MiniLM) can be inverted to reveal semantic topics. Using Syntactic (Stop-Word) TF-IDF ensures that we capture the behavioral fingerprint of the user without mathematically logging their intellectual output.
 
-### Enterprise Privacy & Policy Context
 
-Check out the `simulator.html` file in your browser to interactively compare the information leakage risks of Standard TF-IDF versus Dense Embeddings during a theoretical reconstruction attack.
+
+Check out the `docs/simulator.html` file in your browser to interactively compare the information leakage risks of Standard TF-IDF versus Dense Embeddings during a theoretical reconstruction attack.
+
+### Information Leakage Simulator
+Below is a demonstration of why we use Syntactic TF-IDF over standard semantic embeddings. 
+
+![Simulator Demo](./docs/simulator-demo.gif)
+
+*(Want to try it yourself? [Download the HTML file](./docs/simulator.html) or [view it live via GitHub Pages](link-to-pages)).*
+Try the Interactive Simulator Live](https://htmlpreview.github.io/?https://github.com/YOUR_USERNAME/llm-prompt-fingerprinter/blob/main/docs/simulator.html)
 
 ## Setup
 1. Create a virtual environment: `python -m venv venv && source venv/bin/activate`
@@ -37,4 +45,3 @@ Check out the `simulator.html` file in your browser to interactively compare the
 1. **Train the model:** `python src/train_model.py`
 2. **Test inference:** `python src/infer.py "Could you please write a python script for me?"`
 
-**vibecoded simulator of this mechanism in `docs/simulator.html`
