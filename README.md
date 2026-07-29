@@ -27,7 +27,7 @@ Standard TF-IDF acts as a sparse bag-of-words that easily leaks exact vocabulary
 
 ### Enterprise Privacy & Policy Context
 
-Check out the 'simulator.html' file in your browser to interactively compare the information leakage risks of Standard TF-IDF versus Dense Embeddings during a theoretical reconstruction attack.
+Check out the `simulator.html` file in your browser to interactively compare the information leakage risks of Standard TF-IDF versus Dense Embeddings during a theoretical reconstruction attack.
 
 ## Setup
 1. Create a virtual environment: `python -m venv venv && source venv/bin/activate`
@@ -37,5 +37,4 @@ Check out the 'simulator.html' file in your browser to interactively compare the
 1. **Train the model:** `python src/train_model.py`
 2. **Test inference:** `python src/infer.py "Could you please write a python script for me?"`
 
-
-See a vibecoded simulator of this mechanism in 'docs/simulator.html'
+**vibecoded simulator of this mechanism in `docs/simulator.html`
